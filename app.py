@@ -487,7 +487,21 @@ elif page == "🎯 Career Intelligence":
     st.markdown('<div class="hero-title">Career Intelligence</div>', unsafe_allow_html=True)
     st.markdown('<div class="hero-subtitle">Upload your resume and get AI-powered career guidance</div>', unsafe_allow_html=True)
 
-    if not has_groq:
+    # check if crewai is available
+    try:
+        import crewai
+        has_crewai = True
+    except ImportError:
+        has_crewai = False
+
+    if not has_crewai:
+        st.info("""
+        ℹ️ **AI Agents are not available in the cloud deployment.**  
+        CrewAI requires heavy dependencies that exceed cloud limits.  
+        Run locally with `pip install -r requirements-agents.txt` for full AI features.  
+        The Market Overview page with forecasts and SHAP explanations works fully!
+        """)
+    elif not has_groq:
         st.warning("""
         ⚠️ **AI Agents require a Groq API key.**  
         Add your key to `.env` file: `GROQ_API_KEY=your_key_here`  
@@ -535,7 +549,7 @@ elif page == "🎯 Career Intelligence":
         </div>
         """, unsafe_allow_html=True)
 
-        if st.button("🚀 Run Gap Analysis", disabled=not (has_groq and resume_text),
+        if st.button("🚀 Run Gap Analysis", disabled=not (has_crewai and has_groq and resume_text),
                       use_container_width=True):
             with st.spinner("🔍 Agent analysing your resume..."):
                 try:
@@ -572,7 +586,7 @@ elif page == "🎯 Career Intelligence":
         </div>
         """, unsafe_allow_html=True)
 
-        if st.button("🚀 Scout Opportunities", disabled=not (has_groq and resume_text),
+        if st.button("🚀 Scout Opportunities", disabled=not (has_crewai and has_groq and resume_text),
                       use_container_width=True):
             with st.spinner("🔭 Scouting best opportunities..."):
                 try:
@@ -625,7 +639,7 @@ elif page == "🎯 Career Intelligence":
         placeholder="Paste the full job description from LinkedIn, Naukri, etc.",
     )
 
-    if st.button("🎯 Get Strategy Advice", disabled=not (has_groq and jd_text),
+    if st.button("🎯 Get Strategy Advice", disabled=not (has_crewai and has_groq and jd_text),
                   use_container_width=True):
         with st.spinner("🎯 Analysing job description..."):
             try:

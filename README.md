@@ -1,3 +1,14 @@
+---
+title: HireScope
+emoji: 🔭
+colorFrom: indigo
+colorTo: purple
+sdk: docker
+pinned: false
+license: mit
+short_description: India Job Market Intelligence — 80K+ Real Job Postings
+---
+
 # HireScope — India Job Market Intelligence
 
 A job market forecasting engine for Indian students that aggregates LinkedIn & Naukri job postings, forecasts skill demand 90 days out, and provides personalised career intelligence through AI agents.
@@ -13,17 +24,20 @@ A job market forecasting engine for Indian students that aggregates LinkedIn & N
   - **Strategy Advisor** — tells you when to apply for a specific JD
 - **Streamlit Dashboard** — interactive charts, resume upload, real-time analysis
 
-## Quick Start
+## Quick Start (Local)
 
 ```bash
 # 1. Install dependencies
 pip install -r requirements.txt
 
-# 2. Set your Groq API key (optional — dashboard works without it)
+# 2. (Optional) Install AI agent dependencies
+pip install -r requirements-agents.txt
+
+# 3. Set your Groq API key (optional — dashboard works without it)
 cp .env.example .env
 # Edit .env and add your GROQ_API_KEY
 
-# 3. Run the dashboard
+# 4. Run the dashboard
 streamlit run app.py
 ```
 
@@ -70,4 +84,3 @@ hirescope/
 
 - The dashboard works fully without a Groq API key — forecasts and charts are always available
 - AI agent features (resume analysis, opportunity scouting, strategy advice) require a valid `GROQ_API_KEY` in `.env`
-- Built for Mac M2 / Apple Silicon

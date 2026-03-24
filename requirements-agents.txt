@@ -1,0 +1,7 @@
+# Additional dependencies for AI agent features (optional)
+# Install these locally for full functionality:
+#   pip install -r requirements-agents.txt
+
+crewai>=0.28.0
+crewai-tools>=0.1.0
+groq>=0.4.0
