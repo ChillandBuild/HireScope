@@ -1,4 +1,4 @@
 build-essential
-libmupdf-dev
-libfreetype6-dev
-libharfbuzz-dev
+gcc
+g++
+cmake
