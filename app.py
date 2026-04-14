@@ -36,6 +36,7 @@ st.set_page_config(
 
 # ── custom CSS ─────────────────────────────────────────────────────────────────
 st.markdown("""
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
@@ -158,11 +159,27 @@ div[data-testid="stSidebar"] [data-testid="stMarkdown"] {
 /* Hide default streamlit footer */
 footer {visibility: hidden;}
 
-/* Fix sidebar collapse button icon rendering as text */
-button[kind="header"],
-[data-testid="collapsedControl"] {
-    font-size: 0 !important;
-    overflow: hidden;
+/* Ensure Material Symbols icons render as icons, not text */
+.material-symbols-rounded,
+[data-testid="collapsedControl"] span,
+button[kind="header"] span,
+[data-testid="stFileUploader"] span[class*="Icon"],
+[data-testid="baseButton-header"] span {
+    font-family: 'Material Symbols Rounded' !important;
+    font-style: normal;
+    font-weight: normal;
+    font-size: 24px !important;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: 'liga';
 }
 
 /* Fix expander text overlap */
@@ -496,9 +513,8 @@ elif page == "🎯 Career Intelligence":
 
     if not has_crewai:
         st.info("""
-        ℹ️ **AI Agents are not available in the cloud deployment.**  
-        CrewAI requires heavy dependencies that exceed cloud limits.  
-        Run locally with `pip install -r requirements-agents.txt` for full AI features.  
+        **AI Agents are not available.**  
+        Install agent dependencies: `pip install -r requirements-agents.txt`  
         The Market Overview page with forecasts and SHAP explanations works fully!
         """)
     elif not has_groq:
