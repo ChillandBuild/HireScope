@@ -1,11 +1,8 @@
 """
 HireScope — India Job Market Intelligence Dashboard
-Streamlit app with two pages:
-  Page 1: Market Overview (forecasts, charts, SHAP)
-  Page 2: Career Intelligence (resume upload, AI agents)
+Forecasts, charts, and SHAP explanations for India's job market.
 """
 
-import os
 import sys
 import streamlit as st
 import pandas as pd
@@ -13,9 +10,6 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 from pathlib import Path
-from dotenv import load_dotenv
-
-load_dotenv()
 
 # add project root to path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -106,18 +100,7 @@ html, body, [class*="st-"] {
     border-bottom: 2px solid rgba(99, 102, 241, 0.3);
 }
 
-/* Agent card */
-.agent-card {
-    background: #f8f9fc;
-    border-radius: 12px;
-    padding: 1.2rem;
-    border: 1px solid #e2e8f0;
-    margin-bottom: 1rem;
-}
 
-.agent-card h4 {
-    color: #1e293b;
-}
 
 /* Status badges */
 .badge-rising {
@@ -245,30 +228,12 @@ explanations, shap_df, feature_cols = compute_explanations(model, features)
 with st.sidebar:
     st.markdown("### 🔭 HireScope")
     st.markdown("---")
-    page = st.radio(
-        "Navigate",
-        ["📊 Market Overview", "🎯 Career Intelligence"],
-        label_visibility="collapsed",
-    )
-    st.markdown("---")
     st.markdown(f"**Data:** {len(df):,} postings")
     st.markdown(f"**Skills tracked:** {len(top_skills)}")
     st.markdown(f"**Sources:** LinkedIn + Naukri")
 
-    # API key status
-    groq_key = os.getenv("GROQ_API_KEY", "")
-    has_groq = groq_key and groq_key != "your_groq_key_here"
-    if has_groq:
-        st.success("✅ Groq API connected")
-    else:
-        st.warning("⚠️ No Groq API key — AI agents disabled")
 
-
-# ══════════════════════════════════════════════════════════════════════════════
-# PAGE 1: MARKET OVERVIEW
-# ══════════════════════════════════════════════════════════════════════════════
-if page == "📊 Market Overview":
-    # ── hero header ────────────────────────────────────────────────────────
+# ── hero header ────────────────────────────────────────────────────────
     st.markdown('<div class="hero-title">HireScope</div>', unsafe_allow_html=True)
     st.markdown('<div class="hero-subtitle">India Job Market Intelligence — Powered by 820K+ Real Job Postings</div>', unsafe_allow_html=True)
 
@@ -497,188 +462,3 @@ if page == "📊 Market Overview":
         st.dataframe(styled_df, use_container_width=True, hide_index=True)
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# PAGE 2: CAREER INTELLIGENCE
-# ══════════════════════════════════════════════════════════════════════════════
-elif page == "🎯 Career Intelligence":
-    st.markdown('<div class="hero-title">Career Intelligence</div>', unsafe_allow_html=True)
-    st.markdown('<div class="hero-subtitle">Upload your resume and get AI-powered career guidance</div>', unsafe_allow_html=True)
-
-    # check if crewai is available
-    try:
-        import crewai
-        has_crewai = True
-    except ImportError:
-        has_crewai = False
-
-    if not has_crewai:
-        st.info("""
-        **AI Agents are not available.**  
-        Install agent dependencies: `pip install -r requirements-agents.txt`  
-        The Market Overview page with forecasts and SHAP explanations works fully!
-        """)
-    elif not has_groq:
-        st.warning("""
-        ⚠️ **AI Agents require a Groq API key.**  
-        Add your key to `.env` file: `GROQ_API_KEY=your_key_here`  
-        The Market Overview page works without it.
-        """)
-
-    # ── resume upload + gap analysis ───────────────────────────────────────
-    st.markdown('<div class="section-header">📄 Resume Analysis</div>', unsafe_allow_html=True)
-
-    uploaded_file = st.file_uploader(
-        "Upload your resume (PDF)",
-        type=["pdf"],
-        help="We'll extract skills and compare against market demand",
-    )
-
-    resume_text = ""
-    if uploaded_file is not None:
-        try:
-            import fitz  # pymupdf
-            pdf_bytes = uploaded_file.read()
-            doc = fitz.open(stream=pdf_bytes, filetype="pdf")
-            resume_text = ""
-            for pdf_page in doc:
-                resume_text += pdf_page.get_text()
-            doc.close()
-            st.success(f"✅ Resume loaded: {len(resume_text)} characters extracted")
-
-            with st.expander("Preview extracted text"):
-                st.text(resume_text[:2000])
-        except ImportError:
-            st.error("PyMuPDF not installed. Run: `pip install pymupdf`")
-        except Exception as e:
-            st.error(f"Error reading PDF: {e}")
-
-    col_gap, col_opp = st.columns(2)
-
-    with col_gap:
-        st.markdown("""
-        <div class="agent-card">
-            <h4>🔍 Career Gap Analyst</h4>
-            <p style="color: #64748b; font-size: 0.85rem;">
-                Compares your skills against the top 20 rising market skills 
-                and identifies priority learning areas.
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
-
-        if st.button("🚀 Run Gap Analysis", disabled=not (has_crewai and has_groq and resume_text),
-                      use_container_width=True):
-            with st.spinner("🔍 Agent analysing your resume..."):
-                try:
-                    from agents.gap_analyser import run_gap_analysis
-
-                    # prepare rising skills data
-                    rising_data = []
-                    if isinstance(scores, tuple):
-                        scores_df = scores[0]
-                    else:
-                        scores_df = scores
-
-                    for _, row in scores_df.iterrows():
-                        rising_data.append({
-                            "skill": row.get("skill", ""),
-                            "demand_score": row.get("demand_score", 0),
-                            "trend": row.get("trend", "STABLE"),
-                            "confidence": row.get("confidence", "MEDIUM"),
-                        })
-
-                    result = run_gap_analysis(resume_text, rising_data)
-                    st.session_state["gap_report"] = result
-                except Exception as e:
-                    st.error(f"Agent error: {e}")
-
-    with col_opp:
-        st.markdown("""
-        <div class="agent-card">
-            <h4>🔭 Opportunity Scout</h4>
-            <p style="color: #64748b; font-size: 0.85rem;">
-                Finds the top 5 job opportunities with the best timing 
-                based on market demand trends.
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
-
-        if st.button("🚀 Scout Opportunities", disabled=not (has_crewai and has_groq and resume_text),
-                      use_container_width=True):
-            with st.spinner("🔭 Scouting best opportunities..."):
-                try:
-                    from agents.opportunity_scout import run_opportunity_scouting
-
-                    gap_report = st.session_state.get("gap_report", "No gap analysis yet.")
-                    student_skills = [s.strip() for s in resume_text.split() if len(s) > 3][:20]
-
-                    fc_data = []
-                    if not forecast_summary.empty:
-                        for _, row in forecast_summary.iterrows():
-                            fc_data.append({
-                                "skill": row.get("skill", ""),
-                                "trend": row.get("trend", "STABLE"),
-                                "change_pct": row.get("change_pct", 0),
-                                "confidence": "HIGH",
-                            })
-
-                    result = run_opportunity_scouting(student_skills, gap_report, fc_data)
-                    st.session_state["opportunities"] = result
-                except Exception as e:
-                    st.error(f"Agent error: {e}")
-
-    # display results
-    if "gap_report" in st.session_state:
-        st.markdown('<div class="section-header">📊 Gap Analysis Report</div>', unsafe_allow_html=True)
-        st.markdown(st.session_state["gap_report"])
-
-    if "opportunities" in st.session_state:
-        st.markdown('<div class="section-header">🎯 Top Opportunities</div>', unsafe_allow_html=True)
-        st.markdown(st.session_state["opportunities"])
-
-    # ── strategy advisor ───────────────────────────────────────────────────
-    st.markdown("---")
-    st.markdown('<div class="section-header">📝 Application Strategy Advisor</div>', unsafe_allow_html=True)
-
-    st.markdown("""
-    <div class="agent-card">
-        <h4>🎯 Strategy Advisor</h4>
-        <p style="color: #64748b; font-size: 0.85rem;">
-            Paste a job description below. The AI will tell you whether to 
-            APPLY NOW, WAIT, or SKIP — based on your skills + market timing.
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
-
-    jd_text = st.text_area(
-        "Paste job description here",
-        height=200,
-        placeholder="Paste the full job description from LinkedIn, Naukri, etc.",
-    )
-
-    if st.button("🎯 Get Strategy Advice", disabled=not (has_crewai and has_groq and jd_text),
-                  use_container_width=True):
-        with st.spinner("🎯 Analysing job description..."):
-            try:
-                from agents.strategist import run_strategy_analysis
-
-                student_skills = []
-                if resume_text:
-                    student_skills = [s.strip() for s in resume_text.split() if len(s) > 3][:20]
-
-                fc_data = []
-                if not forecast_summary.empty:
-                    for _, row in forecast_summary.iterrows():
-                        fc_data.append({
-                            "skill": row.get("skill", ""),
-                            "trend": row.get("trend", "STABLE"),
-                            "change_pct": row.get("change_pct", 0),
-                        })
-
-                result = run_strategy_analysis(jd_text, student_skills, fc_data)
-                st.session_state["strategy"] = result
-            except Exception as e:
-                st.error(f"Agent error: {e}")
-
-    if "strategy" in st.session_state:
-        st.markdown('<div class="section-header">📋 Strategy Recommendation</div>', unsafe_allow_html=True)
-        st.markdown(st.session_state["strategy"])
